@@ -86,7 +86,7 @@ namespace FoodServiceBackend.Core
             if (orderList.ContainsKey(emailRecipient))
             {
                 orderList[emailRecipient] = order;
-                Helper.WriteToLogFile(emailRecipient + " Ordered " + order);
+                Helper.WriteToLogFile(emailRecipient + " Ordered " + order.OrderNumber + " with *" + order.AdditionInformation + "* for" + order.Price);
                 return true;
             }
 
