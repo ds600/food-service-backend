@@ -10,7 +10,7 @@ namespace FoodServiceBackend.Core
     {
         public string Token { get; set; } = string.Empty;
         public string OrderNumber { get; set; } = string.Empty;
-        public string AdditionInformation { get; set; } = string.Empty;
+        public string AdditionalInformation { get; set; } = string.Empty;
         public string Price { get; set; } = string.Empty;
     }
 }

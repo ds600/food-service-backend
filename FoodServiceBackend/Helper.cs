@@ -34,16 +34,24 @@ namespace FoodServiceBackend
 
         public static void WriteToLogFile(string text)
         {
-            string logFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
-            Directory.CreateDirectory(logFolderPath);
-
-            string logFileName = DateTime.Now.ToString("yyyy-MM-dd") + ".txt";
-            string logFilePath = Path.Combine(logFolderPath, logFileName);
-
-            using (StreamWriter writer = new StreamWriter(logFilePath, true))
+            try
             {
-                writer.WriteLine(text);
+                string logFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+                Directory.CreateDirectory(logFolderPath);
+
+                string logFileName = DateTime.Now.ToString("yyyy-MM-dd") + ".txt";
+                string logFilePath = Path.Combine(logFolderPath, logFileName);
+
+                using (StreamWriter writer = new StreamWriter(logFilePath, true))
+                {
+                    writer.WriteLine(text);
+                }
             }
+            catch (Exception _)
+            {
+
+            }
+
         }
     }
 }

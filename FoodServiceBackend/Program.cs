@@ -55,14 +55,16 @@ namespace FoodServiceBackend
             }
 
             // Add "Don't care" option, that gets ignored in the final calculation
-            settings.restaurants.Add(new Settings.Restaurant()
+            settings.Restaurants.Add(new Settings.Restaurant()
             {
                 name = "Mir egal"
             });
+
             //Begin voting:
-            DateTime placeVoteDueTime = DateTime.Now.Date + TimeSpan.FromHours(10.2);
+            DateTime placeVoteDueTime = DateTime.Now.Date + TimeSpan.FromHours(settings.VoteEndHour) +
+                TimeSpan.FromMinutes(settings.VoteEndMinute);
             voteManager = new VoteManager(placeVoteDueTime);
-            if (settings.instantlySkipToOrder == false)
+            if (settings.InstantlySkipToOrder == false)
             {
                 voteManager.BeginVoting();
             }
@@ -72,7 +74,7 @@ namespace FoodServiceBackend
                 {
                     EmailAddress = "AverageVoterAndy",
                     Token = "voter",
-                    VoteOptionChosen = settings.winnerIfSkippingToOrder
+                    VoteOptionChosen = settings.WinnerIfSkippingToOrder
                 });
                 voteManager.CreateVotersWithTokens();
                 FinishVote();
@@ -101,7 +103,7 @@ namespace FoodServiceBackend
             finishedVoting = true;
             // after voting time is up:
             Dictionary<string, List<string>> votingResult = new Dictionary<string, List<string>>();
-            foreach (Settings.Restaurant restaurant in settings.restaurants)
+            foreach (Settings.Restaurant restaurant in settings.Restaurants)
             {
                 if (votingResult.ContainsKey(restaurant.name) == false)
                 {
@@ -115,19 +117,19 @@ namespace FoodServiceBackend
                     votingResult[voter.VoteOptionChosen].Add(voter.Token);
 
                     // Count up how often the users voted. Using original settings, so we don't have a "Don't care" option
-                    if (originalSettings.votersAndParticipation.ContainsKey(voter.EmailAddress))
+                    if (originalSettings.VotersAndParticipation.ContainsKey(voter.EmailAddress))
                     {
-                        originalSettings.votersAndParticipation[voter.EmailAddress] += 1;
+                        originalSettings.VotersAndParticipation[voter.EmailAddress] += 1;
                     }
                     else
                     {
-                        originalSettings.votersAndParticipation.Add(voter.EmailAddress, 1);
+                        originalSettings.VotersAndParticipation.Add(voter.EmailAddress, 1);
                     }
                 }
             }
 
             string winningRestaurantString = votingResult.OrderByDescending(x => x.Value.Count).Where(x=> x.Key != "Mir egal").FirstOrDefault().Key;
-            Settings.Restaurant? winningRestaurant = settings.restaurants?.Where(x => x.name == winningRestaurantString)?.FirstOrDefault();
+            Settings.Restaurant? winningRestaurant = settings.Restaurants?.Where(x => x.name == winningRestaurantString)?.FirstOrDefault();
 
             Helper.WriteIntoConsoleAndLog("Voting result:");
             Helper.WriteIntoConsoleAndLog(JsonSerializer.Serialize(
@@ -138,13 +140,13 @@ namespace FoodServiceBackend
                 Helper.WriteIntoConsoleAndLog("Restaurant with the most Votes: " + winningRestaurant.name);
 
                 // Count up win amount for winning restaurant. Using original settings, so we don't have a "Don't care" option
-                if (originalSettings.voteWinners.ContainsKey(winningRestaurant.name))
+                if (originalSettings.VoteWinners.ContainsKey(winningRestaurant.name))
                 {
-                    originalSettings.voteWinners[winningRestaurant.name] += 1;
+                    originalSettings.VoteWinners[winningRestaurant.name] += 1;
                 }
                 else
                 {
-                    originalSettings.voteWinners.Add(winningRestaurant.name, 1);
+                    originalSettings.VoteWinners.Add(winningRestaurant.name, 1);
                 }
                 File.WriteAllText(Settings.SettingsFileName, JsonSerializer.Serialize(originalSettings, new JsonSerializerOptions() { WriteIndented = true }));
             }
@@ -155,13 +157,14 @@ namespace FoodServiceBackend
             }
 
             // now users can place an order at the restaurant with the most votes:
-            DateTime placeOrderDueTime = DateTime.Now.Date + TimeSpan.FromHours(11);
+            DateTime placeOrderDueTime = DateTime.Now.Date + TimeSpan.FromHours(settings.OrderEndHour) +
+                TimeSpan.FromMinutes(settings.OrderEndMinute);
             orderManager = new OrderManager(winningRestaurant, placeOrderDueTime);
-
-
         }
 
-        public static void FinishOrder()
+        private static bool finishedOrderOnceAlready = false;
+
+        public async static void FinishOrder()
         {
             if (orderManager == null || orderManager.Restaurant == null)
             {
@@ -170,8 +173,10 @@ namespace FoodServiceBackend
 
             // If time is up, finish the order, logging it and writing everything into the console.
             Console.ForegroundColor = ConsoleColor.Green;
-            Helper.WriteIntoConsoleAndLog("Today we will order at " + orderManager.Restaurant.name + ".");
-            Helper.WriteIntoConsoleAndLog("Call number " + orderManager.Restaurant.mobilePhoneNumber + ".");
+            string orderMessage = "Today we will order at " + orderManager.Restaurant.name + ".";
+            string callMessage = "Call number " + orderManager.Restaurant.mobilePhoneNumber + ".";
+            Helper.WriteIntoConsoleAndLog(orderMessage);
+            Helper.WriteIntoConsoleAndLog(callMessage);
             Console.ForegroundColor = ConsoleColor.Cyan;
             Helper.WriteIntoConsoleAndLog("Order list:");
             TextEncoderSettings encoderSettings = new TextEncoderSettings();
@@ -180,9 +185,25 @@ namespace FoodServiceBackend
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             }));
 
+            string orderManagerMessage = orderMessage + "<br/>" + callMessage + "<br/><br/>";
             foreach(KeyValuePair<string, Order> order in orderManager.OrderList)
             {
-                Helper.WriteToLogFile(order.Key + " Ordered " + order.Value.OrderNumber + " for a price of " + order.Value.Price);
+                string writtenOrder = order.Key + " Ordered " + order.Value.OrderNumber + " with " + order.Value.AdditionalInformation + " for a price of " + order.Value.Price;
+                Helper.WriteToLogFile(writtenOrder);                
+
+                if (string.IsNullOrEmpty(order.Value.OrderNumber) == false)
+                {
+                    orderManagerMessage += writtenOrder + "<br/>";
+                }
+            }
+
+            if (finishedOrderOnceAlready == false &&
+                settings?.ManagerEmailAddress != null &&
+                string.IsNullOrEmpty(settings.ManagerEmailAddress) == false)
+            {
+                finishedOrderOnceAlready = true;
+                await EmailHelper.SendEmailAsync(orderManagerMessage, settings.ManagerEmailAddress,
+                "FoodServiceBackend - OrdersFinished");
             }
         }
     }

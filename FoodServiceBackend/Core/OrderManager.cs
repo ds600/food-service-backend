@@ -31,7 +31,7 @@ namespace FoodServiceBackend.Core
             Helper.WriteIntoConsoleAndLog("Orders can be placed for " + restaurant.name + " until " + dueTime.ToString());
 
 
-            System.Timers.Timer checkForTime = new System.Timers.Timer(interval5Minutes);
+            System.Timers.Timer checkForTime = new System.Timers.Timer(interval1Minute);
             checkForTime.Elapsed += new ElapsedEventHandler(CheckForTimeElapsed);
             checkForTime.Enabled = true;
 
@@ -44,7 +44,7 @@ namespace FoodServiceBackend.Core
             {
                 return;
             }
-            foreach (string emailRecipient in Program.settings.emailRecipients)
+            foreach (string emailRecipient in Program.settings.EmailRecipients)
             {
                 string? votingToken = Program.voteManager.allVoters.Where(x => x.EmailAddress == emailRecipient).Select(x => x.Token).FirstOrDefault();
  
@@ -52,7 +52,7 @@ namespace FoodServiceBackend.Core
                 {
                     string body = "The vote time is up, you can place your order now! :) <br/>";
 
-                    string link = "http://" + Program.settings.networkInterface + ":" + Program.settings.port + "/order/" + votingToken;
+                    string link = "http://" + Program.settings.NetworkInterface + ":" + Program.settings.Port + "/order/" + votingToken;
                     body += "<br /><br />Use the following link: <a href=\"" + link + "\">" + link + "</a>";
 
                     await EmailHelper.SendEmailAsync(body, emailRecipient, "FoodServiceBackend - OrderYourFood");
@@ -60,7 +60,7 @@ namespace FoodServiceBackend.Core
             }
         }
 
-        const double interval5Minutes = 60 * 5 * 1000; // milliseconds to one hour
+        const double interval1Minute = 60 * 1 * 1000; 
 
         void CheckForTimeElapsed(object? sender, ElapsedEventArgs e)
         {
@@ -86,7 +86,7 @@ namespace FoodServiceBackend.Core
             if (orderList.ContainsKey(emailRecipient))
             {
                 orderList[emailRecipient] = order;
-                Helper.WriteToLogFile(emailRecipient + " Ordered " + order.OrderNumber + " with *" + order.AdditionInformation + "* for" + order.Price);
+                Helper.WriteToLogFile(emailRecipient + " Ordered " + order.OrderNumber + " with *" + order.AdditionalInformation + "* for " + order.Price);
                 return true;
             }
 

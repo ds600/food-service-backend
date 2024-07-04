@@ -48,7 +48,7 @@ namespace FoodServiceBackend.Networking.Webserver
             {
                 VoteOptions voteOptions = new VoteOptions();
                 voteOptions.LastVoteWinner = "Not Implemented yet";
-                voteOptions.Options = Program.settings.restaurants.Select(x => x.name).ToList();
+                voteOptions.Options = Program.settings.Restaurants.Select(x => x.name).ToList();
                 response = new Webserver.ApiResponse(WebSocketSharp.Net.HttpStatusCode.OK,
                      "Successfully returning list of voting options", JsonSerializer.Serialize(voteOptions));
             }
@@ -60,7 +60,7 @@ namespace FoodServiceBackend.Networking.Webserver
                     // Add Url to image path, so frontend can find it
                     for (int i = 0; i < currentMenuPages.Count; i++)
                     {
-                        currentMenuPages[i] = "http://" + Program.settings.networkInterface + ":" + Program.settings.port + "/" + currentMenuPages[i];
+                        currentMenuPages[i] = "http://" + Program.settings.NetworkInterface + ":" + Program.settings.Port + "/" + currentMenuPages[i];
                     }
                     response = new Webserver.ApiResponse(WebSocketSharp.Net.HttpStatusCode.OK,
                         "Successfully returning list of menu locations", JsonSerializer.Serialize(currentMenuPages));
@@ -73,11 +73,11 @@ namespace FoodServiceBackend.Networking.Webserver
             }
             else if (path.EndsWith("allmenus") && Program.settings != null)
             {
-                List<string> allMenus = Program.settings.restaurants.SelectMany(x => x.foodMenuPageScans).ToList();
+                List<string> allMenus = Program.settings.Restaurants.SelectMany(x => x.foodMenuPageScans).ToList();
                 // Add Url to image path, so frontend can find it
                 for (int i = 0; i < allMenus.Count; i++)
                 {
-                    allMenus[i] = "http://" + Program.settings.networkInterface + ":" + Program.settings.port + "/" + allMenus[i];
+                    allMenus[i] = "http://" + Program.settings.NetworkInterface + ":" + Program.settings.Port + "/" + allMenus[i];
                 }
 
                 response = new Webserver.ApiResponse(WebSocketSharp.Net.HttpStatusCode.OK,

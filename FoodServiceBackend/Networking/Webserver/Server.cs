@@ -18,7 +18,7 @@ namespace FoodServiceBackend.Networking
                 return;
             }
 
-            webserver = new HttpServer(System.Net.IPAddress.Parse(Program.settings.networkInterface), Program.settings.port, false);
+            webserver = new HttpServer(System.Net.IPAddress.Parse(Program.settings.NetworkInterface), Program.settings.Port, false);
 
             webserver.OnConnect += Webserver_OnConnect;
             webserver.OnGet += Webserver_OnGet;
@@ -27,8 +27,8 @@ namespace FoodServiceBackend.Networking
             webserver.WaitTime = TimeSpan.FromSeconds(4);
 
             webserver.Start();
-            Helper.WriteLineCyan("Webserver         started. --> " + " Networkinterface: " + Program.settings.networkInterface.PadRight(20) + " Port: " + Program.settings.port.ToString());
-            Helper.WriteLineCyan("Webserver URL: http://" + Program.settings.networkInterface + ":" + Program.settings.port.ToString());
+            Helper.WriteLineCyan("Webserver         started. --> " + " Networkinterface: " + Program.settings.NetworkInterface.PadRight(20) + " Port: " + Program.settings.Port.ToString());
+            Helper.WriteLineCyan("Webserver URL: http://" + Program.settings.NetworkInterface + ":" + Program.settings.Port.ToString());
 
         }
 
