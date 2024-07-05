@@ -2,7 +2,6 @@
 using FoodServiceBackend.Email;
 using FoodServiceBackend.Networking.Webserver;
 using FoodServiceBackend.SettingsRelated;
-using System.Text.Json;
 using System.Xml;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -10,6 +9,7 @@ using FoodServiceBackend.Networking;
 using Microsoft.Extensions.Logging;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using Newtonsoft.Json;
 
 namespace FoodServiceBackend
 {
@@ -29,9 +29,14 @@ namespace FoodServiceBackend
 
             try
             {
+                JsonSerializerSettings serializationSettings = new JsonSerializerSettings
+                {
+                    ObjectCreationHandling = ObjectCreationHandling.Replace
+                };
+
                 string settingsJson = File.ReadAllText(Settings.SettingsFileName);
-                settings = JsonSerializer.Deserialize<Settings>(settingsJson);
-                originalSettings = JsonSerializer.Deserialize<Settings>(settingsJson);
+                settings = JsonConvert.DeserializeObject<Settings>(settingsJson, serializationSettings);
+                originalSettings = JsonConvert.DeserializeObject<Settings>(settingsJson, serializationSettings);
             }
             catch (Exception ex)
             {
@@ -45,7 +50,7 @@ namespace FoodServiceBackend
                 if (response != null && String.Equals(response.Trim(), "Y", StringComparison.OrdinalIgnoreCase))
                 {
                     settings = new Settings();
-                    File.WriteAllText(Settings.SettingsFileName, JsonSerializer.Serialize(settings, new JsonSerializerOptions() { WriteIndented = true }));
+                    File.WriteAllText(Settings.SettingsFileName, JsonConvert.SerializeObject(settings));
                     Helper.WriteIntoConsoleAndLog(Settings.SettingsFileName + " was created.");
                 }
                 else
@@ -132,8 +137,7 @@ namespace FoodServiceBackend
             Settings.Restaurant? winningRestaurant = settings.Restaurants?.Where(x => x.name == winningRestaurantString)?.FirstOrDefault();
 
             Helper.WriteIntoConsoleAndLog("Voting result:");
-            Helper.WriteIntoConsoleAndLog(JsonSerializer.Serialize(
-                votingResult, new JsonSerializerOptions() { WriteIndented = true }));
+            Helper.WriteIntoConsoleAndLog(JsonConvert.SerializeObject(votingResult));
             Helper.WriteIntoConsoleAndLog("");
             if (winningRestaurant != null)
             {
@@ -148,7 +152,7 @@ namespace FoodServiceBackend
                 {
                     originalSettings.VoteWinners.Add(winningRestaurant.name, 1);
                 }
-                File.WriteAllText(Settings.SettingsFileName, JsonSerializer.Serialize(originalSettings, new JsonSerializerOptions() { WriteIndented = true }));
+                File.WriteAllText(Settings.SettingsFileName, JsonConvert.SerializeObject(originalSettings));
             }
             else
             {
@@ -181,9 +185,7 @@ namespace FoodServiceBackend
             Helper.WriteIntoConsoleAndLog("Order list:");
             TextEncoderSettings encoderSettings = new TextEncoderSettings();
             encoderSettings.AllowRange(UnicodeRanges.BasicLatin);
-            Helper.WriteIntoConsoleAndLog(JsonSerializer.Serialize(orderManager.OrderList, new JsonSerializerOptions() { WriteIndented = true,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            }));
+            Helper.WriteIntoConsoleAndLog(JsonConvert.SerializeObject(orderManager.OrderList));
 
             string orderManagerMessage = orderMessage + "<br/>" + callMessage + "<br/><br/>";
             foreach(KeyValuePair<string, Order> order in orderManager.OrderList)

@@ -11,7 +11,7 @@ namespace FoodServiceBackend.Email
     {
         public static async Task SendEmailAsync(string body, string recipientEmailAddress, string subject, string fileAttachmentPath = "")
         {
-            if (Program.settings == null)
+            if (Program.settings == null || string.IsNullOrEmpty(recipientEmailAddress))
             {
                 return;
             }
