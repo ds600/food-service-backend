@@ -1,12 +1,7 @@
 ﻿using FoodServiceBackend.Core;
 using FoodServiceBackend.Email;
-using FoodServiceBackend.Networking.Webserver;
 using FoodServiceBackend.SettingsRelated;
-using System.Xml;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using FoodServiceBackend.Networking;
-using Microsoft.Extensions.Logging;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using Newtonsoft.Json;
@@ -50,7 +45,7 @@ namespace FoodServiceBackend
                 if (response != null && String.Equals(response.Trim(), "Y", StringComparison.OrdinalIgnoreCase))
                 {
                     settings = new Settings();
-                    File.WriteAllText(Settings.SettingsFileName, JsonConvert.SerializeObject(settings));
+                    File.WriteAllText(Settings.SettingsFileName, JsonConvert.SerializeObject(settings, Formatting.Indented));
                     Helper.WriteIntoConsoleAndLog(Settings.SettingsFileName + " was created.");
                 }
                 else
@@ -137,7 +132,7 @@ namespace FoodServiceBackend
             Settings.Restaurant? winningRestaurant = settings.Restaurants?.Where(x => x.name == winningRestaurantString)?.FirstOrDefault();
 
             Helper.WriteIntoConsoleAndLog("Voting result:");
-            Helper.WriteIntoConsoleAndLog(JsonConvert.SerializeObject(votingResult));
+            Helper.WriteIntoConsoleAndLog(JsonConvert.SerializeObject(votingResult, Formatting.Indented));
             Helper.WriteIntoConsoleAndLog("");
             if (winningRestaurant != null)
             {
@@ -152,7 +147,7 @@ namespace FoodServiceBackend
                 {
                     originalSettings.VoteWinners.Add(winningRestaurant.name, 1);
                 }
-                File.WriteAllText(Settings.SettingsFileName, JsonConvert.SerializeObject(originalSettings));
+                File.WriteAllText(Settings.SettingsFileName, JsonConvert.SerializeObject(originalSettings, Formatting.Indented));
             }
             else
             {
@@ -185,7 +180,7 @@ namespace FoodServiceBackend
             Helper.WriteIntoConsoleAndLog("Order list:");
             TextEncoderSettings encoderSettings = new TextEncoderSettings();
             encoderSettings.AllowRange(UnicodeRanges.BasicLatin);
-            Helper.WriteIntoConsoleAndLog(JsonConvert.SerializeObject(orderManager.OrderList));
+            Helper.WriteIntoConsoleAndLog(JsonConvert.SerializeObject(orderManager.OrderList, Formatting.Indented));
 
             string orderManagerMessage = orderMessage + "<br/>" + callMessage + "<br/><br/>";
             foreach(KeyValuePair<string, Order> order in orderManager.OrderList)
