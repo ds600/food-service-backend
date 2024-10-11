@@ -26,6 +26,8 @@ namespace FoodServiceBackend.SettingsRelated
         // Currently just to manually paste into the list, not used programmatically
         public List<string> AllPossibleEmailRecipients { get; set; } = new List<string>() { string.Empty, string.Empty };
 
+        public string SmtpServerAddress { get; set; } = "smtp.gmail.com";
+        public int SmtpServerPort { get; set; } = 465;
 
         public class Restaurant
         {

@@ -1,9 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Authentication;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Security.Authentication;
+using MailKit.Net.Smtp;
+using MailKit;
+using MimeKit;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Util.Store;
+using MailKit.Security;
+using System.Net;
 
 namespace FoodServiceBackend.Email
 {
@@ -15,6 +17,17 @@ namespace FoodServiceBackend.Email
             {
                 return;
             }
+
+            // Define the scope for Gmail
+            var scopes = new[] { "https://mail.google.com/" };
+
+            // Authorize and get credentials
+            var credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
+                GoogleClientSecrets.FromFile("Assets/secret.json").Secrets,
+                scopes,
+                Program.settings.SenderEmail,
+                CancellationToken.None,
+                new FileDataStore(Directory.GetCurrentDirectory(), true)).Result;
 
             string ToMailAddress = recipientEmailAddress;
             bool failedSending = false;
@@ -50,27 +63,21 @@ namespace FoodServiceBackend.Email
 
                         emailMessage.Body = bodyBuilder.ToMessageBody();
 
-                        using (var client = new MailKit.Net.Smtp.SmtpClient())
+                        // Send the email
+                        try
                         {
-                            client.Timeout = 15000;
-                            // Accept all SSL certificates (in case the server supports STARTTLS)
-                            client.ServerCertificateValidationCallback = (s, c, h, e) => true;
-
-                            //Some emailproviders don't seem to hand out
-                            //proper signed certificates
-                            client.CheckCertificateRevocation = false;
-                            client.SslProtocols = SslProtocols.Tls12;
-
-                            await client.ConnectAsync("smtp-mail.outlook.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
-                            // Note: since we don't have an OAuth2 token, disable
-                            // the XOAUTH2 authentication mechanism.
-                            client.AuthenticationMechanisms.Remove("XOAUTH2");
-
-                            // Note: only needed if the SMTP server requires authentication
-                            await client.AuthenticateAsync(Program.settings.SenderEmail, Program.settings.SenderPassword);
-
-                            await client.SendAsync(emailMessage);
-                            await client.DisconnectAsync(true);
+                            using (var client = new SmtpClient())
+                            {
+                                client.Connect("smtp.gmail.com", 465, true);
+                                var oauth2 = new SaslMechanismOAuth2(Program.settings.SenderEmail, credential.Token.AccessToken);
+                                await client.AuthenticateAsync(oauth2);
+                                client.Send(emailMessage);
+                                client.Disconnect(true);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error: " + ex.Message);
                         }
                     }
 
