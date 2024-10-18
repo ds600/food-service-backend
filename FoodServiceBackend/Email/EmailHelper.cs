@@ -6,6 +6,7 @@ using Google.Apis.Auth.OAuth2;
 using Google.Apis.Util.Store;
 using MailKit.Security;
 using System.Net;
+using Google.Apis.Util;
 
 namespace FoodServiceBackend.Email
 {
@@ -28,6 +29,12 @@ namespace FoodServiceBackend.Email
                 Program.settings.SenderEmail,
                 CancellationToken.None,
                 new FileDataStore(Directory.GetCurrentDirectory(), true)).Result;
+
+
+            if (credential.Token.IsStale == true)
+            {
+                await credential.RefreshTokenAsync(CancellationToken.None);
+            }
 
             string ToMailAddress = recipientEmailAddress;
             bool failedSending = false;
